@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Miniera Calceranica VR</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #intro {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+      z-index: 10;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="intro">
+    <h1>Miniera Calceranica VR</h1>
+    <p>
+      Scopri la storia nascosta nelle viscere della montagna.<br>
+      Questa è la ricostruzione virtuale della miniera di Calceranica al Lago, uno dei più importanti siti minerari del Trentino, attivo tra il XIX e il XX secolo per l’estrazione di pirite e rame.<br><br>
+      Passeggia lungo le gallerie originali, ascolta i suoni del sottosuolo e immergiti in un’atmosfera che ha segnato la vita di generazioni di minatori.
+    </p>
+    <button onclick="startExperience()">Inizia l'esplorazione</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/PointerLockControls.js"></script>
+  <audio id="ambience" loop autoplay>
+    <source src="audio/miniera_ambiente.mp3" type="audio/mpeg">
+  </audio>
+  <script>
+    let scene, camera, renderer, controls;
+    let velocity = new THREE.Vector3();
+    let keys = {};
+
+    function startExperience() {
+      document.getElementById("intro").style.display = "none";
+      document.getElementById("ambience").play();
+    }
+
+    init();
+    animate();
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x111111);
+
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      controls = new THREE.PointerLockControls(camera, document.body);
+      document.body.addEventListener('click', () => controls.lock());
+      scene.add(controls.getObject());
+
+      const light = new THREE.PointLight(0xffffff, 1, 100);
+      light.position.set(0, 10, 0);
+      scene.add(light);
+
+      const entranceGeo = new THREE.BoxGeometry(4, 4, 4);
+      const entranceMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+      const entrance = new THREE.Mesh(entranceGeo, entranceMat);
+      entrance.position.set(0, 2, -10);
+      scene.add(entrance);
+
+      const floorGeo = new THREE.PlaneGeometry(100, 100);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      scene.add(floor);
+
+      camera.position.y = 2;
+
+      document.addEventListener('keydown', e => keys[e.code] = true);
+      document.addEventListener('keyup', e => keys[e.code] = false);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (controls.isLocked) {
+        let speed = 0.1;
+        if (keys["KeyW"]) velocity.z = -speed;
+        if (keys["KeyS"]) velocity.z = speed;
+        if (keys["KeyA"]) velocity.x = -speed;
+        if (keys["KeyD"]) velocity.x = speed;
+        controls.moveRight(velocity.x);
+        controls.moveForward(velocity.z);
+        velocity.set(0, 0, 0);
+      }
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>
